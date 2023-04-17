@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { addContacts, deleteContacts, getContacts } from './contactsOperayion';
+import { logout } from 'redux/auth/auth-operation';
 
 const initState = {
   contacts: [],
@@ -21,21 +22,40 @@ const contactsSlice = createSlice({
   extraReducers: buileder => {
     buileder
       .addCase(addContacts.fulfilled, (state, { payload }) => {
-        state.isLoading = false;
-        state.contacts.push(payload);
+        return {
+          ...state,
+          isLoading: false,
+          contacts: [...state.contacts, payload],
+        };
       })
       .addCase(getContacts.fulfilled, (state, { payload }) => {
-        state.isLoading = false;
-        state.contacts = payload;
+        return {
+          ...state,
+          isLoading: false,
+          contacts: [...payload],
+        };
       })
       .addCase(deleteContacts.fulfilled, (state, { payload }) => {
-        state.isLoading = false;
-        state.contacts = state.contacts.filter(el => el.id !== payload);
+        return {
+          ...state,
+          isLoading: false,
+          contacts: [...state.contacts.filter(el => el.id !== payload)],
+        };
+      })
+      .addCase(logout.fulfilled, () => {
+        return {
+          ...initState,
+        };
       })
       .addMatcher(
-        action => action.type.endsWith('/pending'),
+        action =>
+          action.type.startsWith('contacts') &&
+          action.type.endsWith('/pending'),
         state => {
-          state.isLoading = true;
+          return {
+            ...state,
+            isLoading: true,
+          };
         }
       )
       .addMatcher(
@@ -43,8 +63,11 @@ const contactsSlice = createSlice({
           action.type.startsWith('contacts') &&
           action.type.endsWith('/rejected'),
         (state, { payload }) => {
-          state.isLoading = false;
-          state.error = payload;
+          return {
+            ...state,
+            isLoading: false,
+            error: payload,
+          };
         }
       );
   },
